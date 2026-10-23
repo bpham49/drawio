@@ -137,9 +137,8 @@ Draw.loadPlugin(function(ui)
 
 				var hint = document.createElement('div');
 				hint.style.fontSize = '12px';
-				hint.innerText = 'The local MCP server starts automatically with bphamio. If it stayed off, check that ' +
-					'Node.js 22.6+ is on PATH and the BPHAMIO_MCP_SERVER environment variable points at your ' +
-					'mcp-server.ts, then relaunch.';
+				hint.innerText = 'The MCP server is built into bphamio and starts with it. If it isn’t running, ' +
+					'another program is probably using port 37651 — close it and relaunch bphamio.';
 				fieldsContainer.appendChild(hint);
 			}
 
