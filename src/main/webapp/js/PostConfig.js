@@ -25,6 +25,7 @@ window.ICON_SERVICE_PATH = null;
 	{
 		mxscript('plugins/freehand.js', null, null, null, true);
 		mxscript('plugins/mcp-setup.js', null, null, null, true);
+		mxscript('plugins/agent-panel.js', null, null, null, true);
 	}
 	else
 	{

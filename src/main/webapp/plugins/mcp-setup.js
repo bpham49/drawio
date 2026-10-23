@@ -149,6 +149,18 @@ Draw.loadPlugin(function(ui)
 		});
 	}
 
+	// Tell the server which file is open as soon as it's opened, not only on
+	// first save, so Claude's default target follows what's on screen
+	ui.editor.addListener('fileLoaded', function()
+	{
+		var file = ui.getCurrentFile();
+
+		if (file != null && file.fileObject != null && file.fileObject.path != null)
+		{
+			window.electron.request({ action: 'reportActiveFile', path: file.fileObject.path }, function() {}, function() {});
+		}
+	});
+
 	mxResources.parse('mcpSetup=MCP Setup…');
 
 	var action = ui.actions.addAction('mcpSetup', function()
