@@ -491,7 +491,13 @@ var mxSettings =
 				mxSettings.settings.autosave = false;
 				mxSettings.save();
 			}
-			
+
+			// drawio-agentic: always-on, unconditionally — file-watch live reload and
+			// the local MCP server's edit loop both depend on it, so it must not be
+			// source-dependent on the one-time Electron migration above (or anything
+			// else that might flip it off later).
+			mxSettings.settings.autosave = true;
+
 			if (mxSettings.settings.scratchpadSeen != null)
 			{
 				delete mxSettings.settings.scratchpadSeen;
