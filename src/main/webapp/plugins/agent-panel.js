@@ -1,5 +1,5 @@
 /**
- * "Ask Claude" panel for bphamio.
+ * Claude side panel for bphamio.
  *
  * Select shapes, type (or dictate) what to change, and the user's local
  * Claude Code edits the open diagram through bphamio's MCP server. The
@@ -15,7 +15,6 @@ Draw.loadPlugin(function(ui)
 	var graph = ui.editor.graph;
 	var sessionId = null;
 	var busy = false;
-	var win = null;
 	var log, selLine, input, sendBtn, stopBtn;
 
 	function cellLabel(cell)
@@ -122,7 +121,7 @@ Draw.loadPlugin(function(ui)
 
 	window.electron.registerMsgListener('agentEvent', function(e)
 	{
-		if (win == null) return;
+		if (panel == null) return;
 
 		if (e.kind == 'init')
 		{
@@ -155,22 +154,46 @@ Draw.loadPlugin(function(ui)
 		}
 	});
 
-	function createWindow()
+	// Docked in its own column of the editor's CSS grid, right of the format
+	// panel, so it resizes the canvas the same way the format panel does
+	var css = document.createElement('style');
+	css.textContent =
+		'.geEditor.bphamioAgentDocked { grid-template-columns: min-content min-content 1fr min-content min-content; }' +
+		'.bphamioAgentPanel { grid-column: 5; grid-row: 3; min-height: 0; width: 320px; box-sizing: border-box;' +
+		' display: flex; flex-direction: column; padding: 8px 10px; font-size: 12px; z-index: 2;' +
+		' border-left: 1px solid light-dark(#dadce0, #505759); }' +
+		'.bphamioAgentHeader { display: flex; align-items: center; font-weight: 600; font-size: 13px; margin-bottom: 8px; }' +
+		'.bphamioAgentHeader span { flex: 1; }' +
+		'.bphamioAgentClose { cursor: pointer; opacity: 0.6; padding: 0 4px; font-size: 16px; line-height: 1; }' +
+		'.bphamioAgentClose:hover { opacity: 1; }';
+	document.head.appendChild(css);
+
+	var panel = null;
+
+	function createPanel()
 	{
-		var div = document.createElement('div');
-		div.style.display = 'flex';
-		div.style.flexDirection = 'column';
-		div.style.height = '100%';
-		div.style.padding = '8px';
-		div.style.boxSizing = 'border-box';
-		div.style.fontSize = '12px';
+		panel = document.createElement('div');
+		panel.className = 'bphamioAgentPanel';
+
+		var header = document.createElement('div');
+		header.className = 'bphamioAgentHeader';
+		var title = document.createElement('span');
+		title.textContent = 'Claude';
+		header.appendChild(title);
+		var close = document.createElement('a');
+		close.className = 'bphamioAgentClose';
+		close.textContent = '×';
+		close.setAttribute('title', 'Hide panel');
+		mxEvent.addListener(close, 'click', function() { setPanelVisible(false); });
+		header.appendChild(close);
+		panel.appendChild(header);
 
 		log = document.createElement('div');
 		log.style.flex = '1';
 		log.style.overflowY = 'auto';
 		log.style.userSelect = 'text';
 		log.style.marginBottom = '8px';
-		div.appendChild(log);
+		panel.appendChild(log);
 
 		selLine = document.createElement('div');
 		selLine.style.color = 'gray';
@@ -179,16 +202,18 @@ Draw.loadPlugin(function(ui)
 		selLine.style.whiteSpace = 'nowrap';
 		selLine.style.overflow = 'hidden';
 		selLine.style.textOverflow = 'ellipsis';
-		div.appendChild(selLine);
+		panel.appendChild(selLine);
 
 		input = document.createElement('textarea');
 		input.placeholder = 'Change this… (type, or dictate: press Fn twice). ' +
 			(mxClient.IS_MAC ? 'Cmd' : 'Ctrl') + '+Enter sends.';
 		input.style.width = '100%';
-		input.style.height = '60px';
+		input.style.height = '72px';
 		input.style.boxSizing = 'border-box';
 		input.style.resize = 'none';
-		div.appendChild(input);
+		input.style.fontFamily = 'inherit';
+		input.style.fontSize = '12px';
+		panel.appendChild(input);
 
 		mxEvent.addListener(input, 'keydown', function(evt)
 		{
@@ -227,42 +252,62 @@ Draw.loadPlugin(function(ui)
 		buttons.appendChild(newBtn);
 		buttons.appendChild(stopBtn);
 		buttons.appendChild(sendBtn);
-		div.appendChild(buttons);
+		panel.appendChild(buttons);
 
-		var w = 340, h = 420;
-		var x = Math.max(0, document.body.clientWidth - w - 260);
-
-		win = new mxWindow('Ask Claude', div, x, 100, w, h, true, true);
-		win.destroyOnClose = false;
-		win.setMaximizable(false);
-		win.setResizable(true);
-		win.setClosable(true);
-		win.addListener('show', function()
-		{
-			updateSelectionLine();
-			win.fit();
-			input.focus();
-		});
-
+		ui.container.appendChild(panel);
 		graph.getSelectionModel().addListener(mxEvent.CHANGE, updateSelectionLine);
 	}
 
-	mxResources.parse('askClaude=Ask Claude…');
-
-	ui.actions.addAction('askClaude', function()
+	function isPanelVisible()
 	{
-		if (win == null) createWindow();
-		win.setVisible(true);
-		updateSelectionLine();
-		input.focus();
-	});
+		return panel != null && panel.style.display != 'none';
+	}
 
-	var menu = ui.menus.get('extras');
-	var oldFunct = menu.funct;
-
-	menu.funct = function(menu2, parent)
+	function setPanelVisible(visible)
 	{
-		oldFunct.apply(this, arguments);
-		ui.menus.addMenuItems(menu2, ['askClaude'], parent);
-	};
+		if (visible && panel == null) createPanel();
+		if (panel == null) return;
+
+		panel.style.display = visible ? '' : 'none';
+		ui.container.classList.toggle('bphamioAgentDocked', visible);
+		ui.refresh(true);
+
+		try { localStorage.setItem('.bphamioAgentPanel', visible ? '1' : '0'); } catch (e) { /* ignore */ }
+
+		if (visible)
+		{
+			updateSelectionLine();
+			input.focus();
+		}
+	}
+
+	mxResources.parse('askClaude=Claude Panel');
+
+	var action = ui.actions.addAction('askClaude', function()
+	{
+		setPanelVisible(!isPanelVisible());
+	}, null, null, Editor.ctrlKey + '+/');
+	action.setToggleAction(true);
+	action.setSelectedCallback(isPanelVisible);
+	ui.keyHandler.bindAction(191, true, 'askClaude'); // Ctrl+/
+
+	function appendToMenu(name, items)
+	{
+		var menu = ui.menus.get(name);
+		if (menu == null) return;
+		var oldFunct = menu.funct;
+
+		menu.funct = function(menu2, parent)
+		{
+			oldFunct.apply(this, arguments);
+			ui.menus.addMenuItems(menu2, items, parent);
+		};
+	}
+
+	appendToMenu('extras', ['askClaude']);
+	appendToMenu('view', ['-', 'askClaude']);
+
+	var open = true;
+	try { open = localStorage.getItem('.bphamioAgentPanel') != '0'; } catch (e) { /* ignore */ }
+	if (open) setPanelVisible(true);
 });

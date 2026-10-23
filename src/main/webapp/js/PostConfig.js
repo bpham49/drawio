@@ -23,6 +23,7 @@ window.ICON_SERVICE_PATH = null;
 {
 	if (typeof Draw !== 'undefined' && typeof Draw.loadPlugin === 'function' && typeof mxscript === 'function')
 	{
+		mxscript('plugins/branding.js', null, null, null, true);
 		mxscript('plugins/freehand.js', null, null, null, true);
 		mxscript('plugins/mcp-setup.js', null, null, null, true);
 		mxscript('plugins/agent-panel.js', null, null, null, true);
