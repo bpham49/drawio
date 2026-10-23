@@ -288,7 +288,7 @@ div[id*="dgeMermaidOutput-"] {
 	width: 32px;
 	height: 36px;
 	border-radius: 4px;
-	background-color: rgb(240, 135, 5);
+	background-color: #5B3FE0;
 	background-position: center center;
 	background-repeat: no-repeat;
 	transition: 0.1s linear;

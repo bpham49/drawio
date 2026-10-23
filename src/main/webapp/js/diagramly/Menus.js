@@ -1241,7 +1241,7 @@
 		{
 			if (EditorUi.isElectronApp)
 			{
-				editorUi.openLink('https://github.com/jgraph/drawio-desktop/wiki/Getting-Support');
+				editorUi.openLink('https://github.com/bpham49/bphamio/issues');
 			}
 			else
 			{
@@ -2063,7 +2063,7 @@
 				{
 					editorUi.actions.addAction('website...', function()
 					{
-						editorUi.openLink('https://www.drawio.com');
+						editorUi.openLink('https://github.com/bpham49/bphamio');
 					});
 					
 					editorUi.actions.addAction('check4Updates', function()
